@@ -1,38 +1,18 @@
-````markdown
-# JSON_SCHEMA.md
+# JSON Schema Definitions for Frontend Commands
 
-This document provides the full JSON Schema definitions for every supported command and its `params` object. Use this as the authoritative source when validating incoming or outgoing command JSON.
+This document provides the JSON Schema definitions for all commands and their associated parameters, as defined by the Pydantic models in [`2-MVP_Backend/models/commands.py`](2-MVP_Backend/models/commands.py). These schemas ensure consistent data validation for interactions between the backend and frontend.
 
----
+## Command Schema
 
-## Top-Level Schema
+The `Command` schema defines the structure for a single instruction sent to the frontend viewer.
 
 ```json
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "CommandsArray",
-  "description": "An ordered list of commands for the 3D viewer to execute",
-  "type": "array",
-  "items": { "$ref": "#/definitions/Command" },
-  "definitions": { /* see below */ }
-}
-````
-
----
-
-## Definitions
-
-### `Command`
-
-A single command object. Must have a `command` name and a `params` object matching that command.
-
-```json
-"Command": {
+  "title": "Command",
+  "description": "A single instruction for the frontend viewer.",
   "type": "object",
-  "description": "A single instruction for the frontend viewer",
   "properties": {
     "command": {
-      "type": "string",
       "description": "Name of the command to execute",
       "enum": [
         "buildStructure",
@@ -47,389 +27,476 @@ A single command object. Must have a `command` name and a `params` object matchi
         "toggleUnitCell",
         "setView",
         "displayMessage"
-      ]
+      ],
+      "type": "string"
     },
     "params": {
-      "type": "object",
-      "description": "Parameters for the specific command"
-    }
-  },
-  "required": ["command", "params"],
-  "allOf": [
-    {
-      "if": { "properties": { "command": { "const": "buildStructure" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/BuildStructureParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "loadPdb" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/LoadPdbParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "setRepresentation" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/SetRepresentationParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "setBackgroundColor" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/SetBackgroundColorParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "rotateCamera" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/RotateCameraParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "translateCamera" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/TranslateCameraParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "zoom" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/ZoomParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "resetView" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/ResetViewParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "toggleAxes" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/ToggleAxesParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "toggleUnitCell" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/ToggleUnitCellParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "setView" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/SetViewParams" } } }
-    },
-    {
-      "if": { "properties": { "command": { "const": "displayMessage" } } },
-      "then": { "properties": { "params": { "$ref": "#/definitions/DisplayMessageParams" } } }
-    }
-  ]
-}
-```
-
----
-
-### `BuildStructureParams`
-
-```json
-"BuildStructureParams": {
-  "type": "object",
-  "description": "Parameters to build a new atomic structure from raw file text",
-  "properties": {
-    "format": {
-      "type": "string",
-      "description": "File format of the structure data",
-      "enum": ["pdb", "xyz", "sdf", "mol2", "cif"]
-    },
-    "content": {
-      "type": "string",
-      "description": "Raw molecular data (PDB/XYZ/etc.) as text"
-    },
-    "options": {
-      "type": "object",
-      "description": "Optional 3Dmol.js addModel options",
-      "additionalProperties": true
-    }
-  },
-  "required": ["format", "content"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `LoadPdbParams`
-
-```json
-"LoadPdbParams": {
-  "type": "object",
-  "description": "Parameters to load a PDB entry by ID",
-  "properties": {
-    "pdbId": {
-      "type": "string",
-      "description": "Four-character PDB identifier",
-      "pattern": "^[A-Za-z0-9]{4}$"
-    }
-  },
-  "required": ["pdbId"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `SetRepresentationParams`
-
-```json
-"SetRepresentationParams": {
-  "type": "object",
-  "description": "Parameters to change the visual style of the model",
-  "properties": {
-    "style": {
-      "type": "string",
-      "description": "Representation style for the model",
-      "enum": ["stick", "line", "sphere", "cartoon", "ballAndStick"]
-    },
-    "options": {
-      "type": "object",
-      "description": "Style-specific options (radius, scale, etc.)",
-      "additionalProperties": true
-    },
-    "colorScheme": {
-      "type": "string",
-      "description": "Coloring scheme (Jmol, ssPyMol, element, etc.)"
-    },
-    "opacity": {
-      "type": "number",
-      "description": "Opacity value between 0.0 (transparent) and 1.0 (opaque)",
-      "minimum": 0,
-      "maximum": 1
-    }
-  },
-  "required": ["style"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `SetBackgroundColorParams`
-
-```json
-"SetBackgroundColorParams": {
-  "type": "object",
-  "description": "Parameters to change the viewer background color",
-  "properties": {
-    "color": {
-      "type": "string",
-      "description": "CSS color string or hex code (e.g. 'white', '#FF0000')"
-    }
-  },
-  "required": ["color"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `RotateCameraParams`
-
-```json
-"RotateCameraParams": {
-  "type": "object",
-  "description": "Parameters to rotate the camera around an axis",
-  "properties": {
-    "axis": {
+      "description": "Parameters for the specific command",
       "oneOf": [
         {
-          "type": "string",
-          "description": "Principal axis name",
-          "enum": ["x", "y", "z"]
+          "$ref": "#/$defs/BuildStructureParams"
         },
         {
+          "$ref": "#/$defs/LoadPdbParams"
+        },
+        {
+          "$ref": "#/$defs/SetRepresentationParams"
+        },
+        {
+          "$ref": "#/$defs/SetBackgroundColorParams"
+        },
+        {
+          "$ref": "#/$defs/RotateCameraParams"
+        },
+        {
+          "$ref": "#/$defs/TranslateCameraParams"
+        },
+        {
+          "$ref": "#/$defs/ZoomParams"
+        },
+        {
+          "$ref": "#/$defs/ResetViewParams"
+        },
+        {
+          "$ref": "#/$defs/ToggleAxesParams"
+        },
+        {
+          "$ref": "#/$defs/ToggleUnitCellParams"
+        },
+        {
+          "$ref": "#/$defs/SetViewParams"
+        },
+        {
+          "$ref": "#/$defs/DisplayMessageParams"
+        }
+      ]
+    }
+  },
+  "required": [
+    "command",
+    "params"
+  ],
+  "$defs": {
+    "BuildStructureParams": {
+      "title": "BuildStructureParams",
+      "description": "Parameters to build a new atomic structure using ASE.",
+      "type": "object",
+      "properties": {
+        "element": {
+          "description": "Chemical symbol of the element (e.g., 'Al', 'Fe')",
+          "type": "string"
+        },
+        "lattice": {
+          "description": "Lattice type (e.g., 'fcc', 'bcc', 'hcp')",
+          "type": "string"
+        },
+        "nx": {
+          "description": "Supercell dimension along x-axis",
+          "default": 1,
+          "type": "integer"
+        },
+        "ny": {
+          "description": "Supercell dimension along y-axis",
+          "default": 1,
+          "type": "integer"
+        },
+        "nz": {
+          "description": "Supercell dimension along z-axis",
+          "default": 1,
+          "type": "integer"
+        },
+        "a": {
+          "description": "Lattice constant in Angstroms (if not default for element/lattice)",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "format": {
+          "description": "Output file format for the structure data",
+          "default": "pdb",
+          "enum": [
+            "pdb",
+            "xyz",
+            "cif"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "element",
+        "lattice"
+      ],
+      "additionalProperties": false
+    },
+    "RotateCameraParams": {
+      "title": "RotateCameraParams",
+      "description": "Parameters to rotate the camera around an axis.",
+      "type": "object",
+      "properties": {
+        "axis": {
+          "description": "Principal axis name or custom axis vector [x, y, z]",
+          "anyOf": [
+            {
+              "enum": [
+                "x",
+                "y",
+                "z"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          ]
+        },
+        "angle": {
+          "description": "Rotation angle in degrees",
+          "type": "number"
+        }
+      },
+      "required": [
+        "axis",
+        "angle"
+      ],
+      "additionalProperties": false
+    },
+    "Quaternion": {
+      "title": "Quaternion",
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        },
+        "w": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z",
+        "w"
+      ],
+      "additionalProperties": false
+    },
+    "Translation": {
+      "title": "Translation",
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "additionalProperties": false
+    },
+    "ViewObject": {
+      "title": "ViewObject",
+      "description": "3Dmol.js view state object.",
+      "type": "object",
+      "properties": {
+        "quaternion": {
+          "$ref": "#/$defs/Quaternion"
+        },
+        "translation": {
+          "$ref": "#/$defs/Translation"
+        },
+        "zoom": {
+          "description": "Camera zoom level",
+          "type": "number"
+        }
+      },
+      "required": [
+        "quaternion",
+        "translation",
+        "zoom"
+      ],
+      "additionalProperties": false
+    },
+    "SetViewParams": {
+      "title": "SetViewParams",
+      "description": "Parameters to restore a saved camera view.",
+      "type": "object",
+      "properties": {
+        "viewObject": {
+          "description": "3Dmol.js view state object",
+          "$ref": "#/$defs/ViewObject"
+        }
+      },
+      "required": [
+        "viewObject"
+      ],
+      "additionalProperties": false
+    },
+    "LoadPdbParams": {
+      "title": "LoadPdbParams",
+      "description": "Parameters to load a PDB entry by ID.",
+      "type": "object",
+      "properties": {
+        "pdbId": {
+          "description": "Four-character PDB identifier",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9]{4}$"
+        }
+      },
+      "required": [
+        "pdbId"
+      ],
+      "additionalProperties": false
+    },
+    "SetRepresentationParams": {
+      "title": "SetRepresentationParams",
+      "description": "Parameters to change the visual style of the model.",
+      "type": "object",
+      "properties": {
+        "style": {
+          "description": "Representation style for the model",
+          "enum": [
+            "stick",
+            "line",
+            "sphere",
+            "cartoon",
+            "ballAndStick"
+          ],
+          "type": "string"
+        },
+        "options": {
+          "description": "Style-specific options (radius, scale, etc.)",
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "colorScheme": {
+          "description": "Coloring scheme (Jmol, ssPyMol, element, etc.)",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "opacity": {
+          "description": "Opacity value between 0.0 (transparent) and 1.0 (opaque)",
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "style"
+      ],
+      "additionalProperties": false
+    },
+    "SetBackgroundColorParams": {
+      "title": "SetBackgroundColorParams",
+      "description": "Parameters to change the viewer background color.",
+      "type": "object",
+      "properties": {
+        "color": {
+          "description": "CSS color string or hex code (e.g. 'white', '#FF0000')",
+          "type": "string"
+        }
+      },
+      "required": [
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "TranslateCameraParams": {
+      "title": "TranslateCameraParams",
+      "description": "Parameters to pan (translate) the camera.",
+      "type": "object",
+      "properties": {
+        "vector": {
+          "description": "Translation vector [dx, dy, dz]",
           "type": "array",
-          "description": "Custom axis vector [x, y, z]",
-          "items": { "type": "number" },
+          "items": {
+            "type": "number"
+          },
           "minItems": 3,
           "maxItems": 3
         }
-      ]
-    },
-    "angle": {
-      "type": "number",
-      "description": "Rotation angle in degrees"
-    }
-  },
-  "required": ["axis", "angle"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `TranslateCameraParams`
-
-```json
-"TranslateCameraParams": {
-  "type": "object",
-  "description": "Parameters to pan (translate) the camera",
-  "properties": {
-    "vector": {
-      "type": "array",
-      "description": "Translation vector [dx, dy, dz]",
-      "items": { "type": "number" },
-      "minItems": 3,
-      "maxItems": 3
-    }
-  },
-  "required": ["vector"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `ZoomParams`
-
-```json
-"ZoomParams": {
-  "type": "object",
-  "description": "Parameters to zoom the camera in or out",
-  "properties": {
-    "factor": {
-      "type": "number",
-      "description": "Zoom factor (>1 = zoom in; <1 = zoom out)"
-    },
-    "fixedPath": {
-      "type": "boolean",
-      "description": "Zoom along fixed path (true) or relative (false)"
-    }
-  },
-  "required": ["factor"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `ResetViewParams`
-
-```json
-"ResetViewParams": {
-  "type": "object",
-  "description": "Parameters to reset the camera to default view",
-  "properties": {},
-  "additionalProperties": false
-}
-```
-
----
-
-### `ToggleAxesParams`
-
-```json
-"ToggleAxesParams": {
-  "type": "object",
-  "description": "Parameters to show or hide coordinate axes",
-  "properties": {
-    "show": {
-      "type": "boolean",
-      "description": "true to show axes; false to hide"
-    }
-  },
-  "required": ["show"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `ToggleUnitCellParams`
-
-```json
-"ToggleUnitCellParams": {
-  "type": "object",
-  "description": "Parameters to show or hide the crystallographic unit cell",
-  "properties": {
-    "show": {
-      "type": "boolean",
-      "description": "true to show unit cell; false to hide"
-    },
-    "crystalData": {
-      "type": "object",
-      "description": "Optional explicit cell parameters",
-      "properties": {
-        "a": { "type": "number", "description": "Cell length a" },
-        "b": { "type": "number", "description": "Cell length b" },
-        "c": { "type": "number", "description": "Cell length c" },
-        "alpha": { "type": "number", "description": "Angle α in degrees" },
-        "beta": { "type": "number", "description": "Angle β in degrees" },
-        "gamma": { "type": "number", "description": "Angle γ in degrees" }
       },
-      "required": ["a","b","c","alpha","beta","gamma"],
+      "required": [
+        "vector"
+      ],
       "additionalProperties": false
-    }
-  },
-  "required": ["show"],
-  "additionalProperties": false
-}
-```
-
----
-
-### `SetViewParams`
-
-```json
-"SetViewParams": {
-  "type": "object",
-  "description": "Parameters to restore a saved camera view",
-  "properties": {
-    "viewObject": {
+    },
+    "ZoomParams": {
+      "title": "ZoomParams",
+      "description": "Parameters to zoom the camera in or out.",
       "type": "object",
-      "description": "3Dmol.js view state object",
       "properties": {
-        "quaternion": {
-          "type": "object",
-          "description": "Rotation quaternion",
-          "properties": {
-            "x": { "type": "number" },
-            "y": { "type": "number" },
-            "z": { "type": "number" },
-            "w": { "type": "number" }
-          },
-          "required": ["x","y","z","w"],
-          "additionalProperties": false
+        "factor": {
+          "description": "Zoom factor (>1 = zoom in; <1 = zoom out)",
+          "type": "number"
         },
-        "translation": {
-          "type": "object",
-          "description": "Camera translation vector",
-          "properties": {
-            "x": { "type": "number" },
-            "y": { "type": "number" },
-            "z": { "type": "number" }
-          },
-          "required": ["x","y","z"],
-          "additionalProperties": false
-        },
-        "zoom": {
-          "type": "number",
-          "description": "Camera zoom level"
+        "fixedPath": {
+          "description": "Zoom along fixed path (true) or relative (false)",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
-      "required": ["quaternion","translation","zoom"],
+      "required": [
+        "factor"
+      ],
+      "additionalProperties": false
+    },
+    "ResetViewParams": {
+      "title": "ResetViewParams",
+      "description": "Parameters to reset the camera to default view.",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "ToggleAxesParams": {
+      "title": "ToggleAxesParams",
+      "description": "Parameters to show or hide coordinate axes.",
+      "type": "object",
+      "properties": {
+        "show": {
+          "description": "true to show axes; false to hide",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "show"
+      ],
+      "additionalProperties": false
+    },
+    "CrystalData": {
+      "title": "CrystalData",
+      "type": "object",
+      "properties": {
+        "a": {
+          "description": "Cell length a",
+          "type": "number"
+        },
+        "b": {
+          "description": "Cell length b",
+          "type": "number"
+        },
+        "c": {
+          "description": "Cell length c",
+          "type": "number"
+        },
+        "alpha": {
+          "description": "Angle α in degrees",
+          "type": "number"
+        },
+        "beta": {
+          "description": "Angle β in degrees",
+          "type": "number"
+        },
+        "gamma": {
+          "description": "Angle γ in degrees",
+          "type": "number"
+        }
+      },
+      "required": [
+        "a",
+        "b",
+        "c",
+        "alpha",
+        "beta",
+        "gamma"
+      ],
+      "additionalProperties": false
+    },
+    "ToggleUnitCellParams": {
+      "title": "ToggleUnitCellParams",
+      "description": "Parameters to show or hide the crystallographic unit cell.",
+      "type": "object",
+      "properties": {
+        "show": {
+          "description": "true to show unit cell; false to hide",
+          "type": "boolean"
+        },
+        "crystalData": {
+          "description": "Optional explicit cell parameters",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CrystalData"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "show"
+      ],
+      "additionalProperties": false
+    },
+    "DisplayMessageParams": {
+      "title": "DisplayMessageParams",
+      "description": "Parameters to show a chat message in the frontend.",
+      "type": "object",
+      "properties": {
+        "message": {
+          "description": "Text to display in the chat pane",
+          "type": "string"
+        },
+        "type": {
+          "description": "Severity or style of the message",
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "error"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "message",
+        "type"
+      ],
       "additionalProperties": false
     }
-  },
-  "required": ["viewObject"],
-  "additionalProperties": false
+  }
 }
-```
-
----
-
-### `DisplayMessageParams`
-
-```json
-"DisplayMessageParams": {
-  "type": "object",
-  "description": "Parameters to show a chat message in the frontend",
-  "properties": {
-    "message": {
-      "type": "string",
-      "description": "Text to display in the chat pane"
-    },
-    "type": {
-      "type": "string",
-      "description": "Severity or style of the message",
-      "enum": ["info", "success", "warning", "error"]
-    }
-  },
-  "required": ["message","type"],
-  "additionalProperties": false
-}
-```
-
----
-
-> **Note:** Any additional commands introduced in future versions must be added to the `Command` enum and have a corresponding `Params` definition in this file. Always keep **JSON\_SCHEMA.md** and **MODULE\_SPEC.md** in sync.

@@ -1,292 +1,295 @@
-# MODULE\_SPEC.md
+# Module Specifications: NLP-Atomic-Backend
 
-This document specifies the backend modules, their responsibilities, and their public interfaces (functions, inputs, and outputs). Use this as a reference when implementing each component.
+This document provides detailed specifications for each module within the `2-MVP_Backend` service. It outlines their responsibilities, public interfaces (functions, inputs, and outputs), and any exceptions they might raise. This ensures clarity on module contracts and facilitates future development and maintenance.
 
----
+## Table of Contents
 
-## 1. `app.py` (API Layer)
-
-**Responsibilities:**
-
-* Initialize Flask application and configure CORS
-* Define and register the `/api/commands` endpoint
-* Orchestrate the pipeline: NLP → Validation → Execution
-* Handle top‑level exceptions and map them to HTTP responses
-
-**Public Functions / Globals:**
-
-```python
-app: Flask  # Flask application instance
-```
-
-### Endpoint Handler
-
-```python
-def commands_endpoint() -> Response
-```
-
-* **Location:** `app.py`
-* **Input:**
-
-  * JSON body with:
-
-    * `prompt` (str)
-    * optional `context` (List\[dict])
-* **Process:**
-
-  1. Parse request JSON
-  2. Call `generate_commands(prompt, context)`
-  3. Call `validate_commands(raw_commands)`
-  4. Call `execute_commands(valid_commands)`
-  5. Return `jsonify(executed_commands)`
-* **Output:**
-
-  * On success: HTTP 200 + JSON array of executed commands
-  * On client error (e.g. validation): HTTP 400/422 + `{ "error": msg }`
-  * On NLP upstream error: HTTP 502 + `{ "error": msg }`
-  * On server error: HTTP 500 + `{ "error": msg }`
-
-**Notes:**
-
-* Register error handlers via `app.register_error_handler`
-* Log incoming requests and durations
+1.  [Introduction](#1-introduction)
+2.  [API Layer (`app.py`)](#2-api-layer-apppy)
+3.  [NLP Client (`nlp/llm_client.py`)](#3-nlp-client-nplllm_clientpy)
+4.  [Validation Module (`models/commands.py`)](#4-validation-module-modelscommandspy)
+5.  [Executor Module](#5-executor-module)
+    *   [Structure Executor (`executor/structure.py`)](#51-structure-executor-executorstructurepy)
+    *   [View Executor (`executor/view.py`)](#52-view-executor-executorviewpy)
+6.  [Utilities (`utils/`)](#6-utilities-utils)
+    *   [Error Handlers (`utils/error_handlers.py`)](#61-error-handlers-utilterror_handlerspy)
+    *   [Logging (`utils/logging.py`)](#62-logging-utilsloggingpy)
 
 ---
 
-## 2. `nlp/llm_client.py` (NLP Client)
+## 1. Introduction
 
-**Responsibilities:**
+The NLP-Atomic-Backend is designed with a modular architecture to ensure clear separation of concerns and maintainability. Each module has a specific role in processing natural language prompts, generating and validating commands, executing atomic structure and view operations, and returning structured results to the frontend.
 
-* Configure OpenAI API key
-* Define function schemas for ChatCompletion
-* Construct few‑shot prompt template
-* Invoke OpenAI ChatCompletion to get raw command JSON
-
-**Public Functions:**
-
-```python
-def generate_commands(
-    prompt: str,
-    context: Optional[List[dict]] = None
-) -> List[dict]
-```
-
-* **Input:**
-
-  * `prompt`: user’s natural‑language message
-  * `context`: optional history of previous commands (for multi‑turn)
-* **Process:**
-
-  1. Build `messages` list:
-
-     * System message (instructions + function definitions)
-     * Few‑shot examples
-     * User message(s)
-  2. Call `openai.ChatCompletion.create(...)`
-  3. Extract `choices[0].message.function_call.arguments`
-  4. Parse arguments JSON into Python `List[dict]`
-* **Output:**
-
-  * List of raw command dicts, e.g.
-
-    ```json
-    [{ "command": "buildStructure", "params": { ... } }, ...]
-    ```
-* **Exceptions:**
-
-  * Raises `NLPError` if API fails or response malformed
+This document serves as a contract for each module, detailing its public-facing functions, expected inputs, and guaranteed outputs.
 
 ---
 
-## 3. `models/commands.py` (Validation Module)
+## 2. API Layer (`app.py`)
 
-**Responsibilities:**
+**Responsibility:**
+The `app.py` module serves as the primary entry point for all external requests. It handles HTTP request parsing, orchestrates the flow of data through the NLP, validation, and execution modules, and formats the final response. It also implements global error handling and CORS policies.
 
-* Define Pydantic models for every supported command and its `params`
-* Validate raw command dicts against these models
+**Public Interface:**
 
-**Public Classes & Functions:**
+### `POST /api/commands`
 
-```python
-class BuildStructureParams(BaseModel):
-    format: Literal["pdb","xyz","sdf","mol2","cif"]
-    content: str
-    options: Optional[dict]
+Processes a natural language prompt from the frontend, translates it into a sequence of structured commands, executes them, and returns the results.
 
-class RotateCameraParams(BaseModel):
-    axis: Union[Literal["x","y","z"], Tuple[float,float,float]]
-    angle: float
-
-# ... other Params classes ...
-
-class Command(BaseModel):
-    command: Literal[
-      "buildStructure", "loadPdb", "setRepresentation",
-      "setBackgroundColor", "rotateCamera",
-      "translateCamera", "zoom", "resetView",
-      "toggleAxes", "toggleUnitCell",
-      "setView", "displayMessage"
-    ]
-    params: Union[
-      BuildStructureParams,
-      RotateCameraParams,
-      # ... other Params classes ...
-    ]
-
-
-def validate_commands(raw: List[dict]) -> List[Command]
-```
-
-* **Input:** raw list of dicts from `generate_commands`
-* **Process:** loop `Command.parse_obj(item)` for each
-* **Output:** list of validated `Command` instances
-* **Exceptions:** raises `ValidationError` on mismatch
+*   **Endpoint:** `/api/commands`
+*   **Method:** `POST`
+*   **Inputs:**
+    *   **Request Body (JSON):**
+        ```json
+        {
+          "prompt": "string"
+        }
+        ```
+        *   `prompt`: The natural language query from the user (e.g., "build an FCC aluminum structure").
+*   **Outputs:**
+    *   **Response Body (JSON):** A list of executed commands, each with its original command and parameters, and the result of its execution.
+        ```json
+        [
+          {
+            "command": "string",
+            "params": { ... }, // Parameters specific to the command
+            "result": { ... }  // Result of the command execution (e.g., PDB data, view object)
+          }
+        ]
+        ```
+*   **Exceptions:**
+    *   `HTTPException (400 Bad Request)`: If the input JSON is malformed or the prompt is missing.
+    *   `HTTPException (500 Internal Server Error)`: For unhandled exceptions during NLP processing, command validation, or execution.
+    *   `HTTPException (422 Unprocessable Entity)`: If the LLM generates commands that fail schema validation.
 
 ---
 
-## 4. `executor/structure.py` (Structure Executor)
+## 3. NLP Client (`nlp/llm_client.py`)
 
-**Responsibilities:**
+**Responsibility:**
+The `llm_client.py` module is responsible for interacting with the OpenAI ChatCompletion API. It takes a user's natural language prompt, constructs the appropriate API request with function schemas and few-shot examples, and extracts the generated structured JSON commands from the LLM's response.
 
-* Build atomic structures using ASE
-* Return raw file text (PDB/XYZ) for the frontend
+**Public Interface:**
 
-**Public Function:**
+### `generate_commands_from_prompt(prompt: str) -> List[Dict[str, Any]]`
 
-```python
-def build_structure(params: BuildStructureParams) -> str
-```
+Sends a user prompt to the LLM and retrieves a list of structured command objects.
 
-* **Input:**
-
-  * `params.format`: output format
-  * `params.content`: ignored on build (raw generation)
-  * `params.options`: currently unused
-  * Additional fields from `BuildStructureParams` (e.g. lattice, element, nx, ny, nz if extended)
-* **Process:**
-
-  1. Create primitive cell: `ase.build.bulk(...)`
-  2. Tile supercell: `cell * (nx,ny,nz)`
-  3. Write to `io.StringIO()` via `ase.io.write(buffer, supercell, format)`
-* **Output:**
-
-  * PDB/XYZ text as Python `str`
-* **Exceptions:**
-
-  * Raises `ExecutionError` on ASE failures
-
----
-
-## 5. `executor/view.py` (View Executor)
-
-**Responsibilities:**
-
-* Compute camera/view parameters for viewer commands
-
-**Public Functions:**
-
-```python
-def compute_set_view(face: str) -> dict
-```
-
-* **Input:**
-
-  * `face`: one of `"100"`,`"010"`,`"001"`,`"110"`,`"111"`
-* **Process:**
-
-  * Map face → normalized view direction
-  * Choose appropriate up vector
-* **Output:**
-
-  * `viewObject` dict matching 3Dmol.js `viewer.getView()` shape
-  * Contains `quaternion`, `translation`, `zoom`
-
-```python
-def compute_rotate_camera(
-    prev_view: dict,
-    axis: Union[str, Tuple[float,float,float]],
-    angle: float
-) -> dict
-```
-
-* **Input:**
-
-  * `prev_view`: existing viewObject
-  * `axis`, `angle` from `RotateCameraParams`
-* **Process:**
-
-  * Convert axis/angle → rotation quaternion
-  * Combine with `prev_view["quaternion"]`
-* **Output:**
-
-  * New `viewObject` dict
-* **Exceptions:**
-
-  * Raises `ExecutionError` on calculation errors
+*   **Inputs:**
+    *   `prompt` (str): The natural language query from the user.
+*   **Outputs:**
+    *   `List[Dict[str, Any]]`: A list of dictionaries, where each dictionary represents a command generated by the LLM, conforming to the `Command` schema defined in `JSON_SCHEMA.md`.
+        ```python
+        [
+            {
+                "command": "buildStructure",
+                "params": {
+                    "element": "Al",
+                    "lattice": "fcc",
+                    "nx": 1,
+                    "ny": 1,
+                    "nz": 1,
+                    "format": "pdb"
+                }
+            },
+            {
+                "command": "rotateCamera",
+                "params": {
+                    "axis": "y",
+                    "angle": 90
+                }
+            }
+        ]
+        ```
+*   **Exceptions:**
+    *   `OpenAIError`: If there's an issue communicating with the OpenAI API.
+    *   `LLMGenerationError`: If the LLM fails to generate valid function calls or the response is malformed.
 
 ---
 
-## 6. `utils/file_utils.py` (File Utilities)
+## 4. Validation Module (`models/commands.py`)
 
-**Responsibilities:**
+**Responsibility:**
+The `commands.py` module defines the Pydantic models for all supported commands and their parameters. Its primary role is to validate the structure and content of the JSON commands received from the NLP client, ensuring they conform to predefined schemas.
 
-* Helpers for file or buffer management (if switching to file paths)
-* Generate unique filenames or in-memory identifiers
+**Public Interface:**
 
-**Public Functions:**
+### `validate_commands(raw_commands: List[Dict[str, Any]]) -> List[Command]`
 
-```python
-def generate_uuid_filename(extension: str) -> str
-```
+Validates a list of raw command dictionaries against their respective Pydantic schemas.
 
-* **Input:** desired file extension (e.g. `".pdb"`)
-* **Output:** a string `"<uuid><extension>"`
+*   **Inputs:**
+    *   `raw_commands` (List[Dict[str, Any]]): A list of dictionaries, typically received from the NLP client, representing commands and their parameters.
+*   **Outputs:**
+    *   `List[Command]`: A list of validated Pydantic `Command` objects. Each `Command` object will have a `command` attribute (str) and a `params` attribute (Pydantic model specific to the command).
+*   **Exceptions:**
+    *   `ValidationError`: If any command or its parameters do not conform to the defined Pydantic schemas. This exception will contain details about the validation failures.
 
-```python
-def write_temp_file(filename: str, content: str) -> str
-```
+**Pydantic Models (Internal/Schema Reference):**
+This module defines various Pydantic models, including:
+*   `Command`: The base model for all commands, using `Union` to allow for different `params` types.
+*   `BuildStructureParams`: Parameters for the `buildStructure` command.
+*   `RotateCameraParams`: Parameters for the `rotateCamera` command.
+*   `SetViewParams`: Parameters for the `setView` command.
+*   `LoadPdbParams`: Parameters for the `loadPdb` command.
+*   `SetRepresentationParams`: Parameters for the `setRepresentation` command.
+*   `SetBackgroundColorParams`: Parameters for the `setBackgroundColor` command.
+*   `TranslateCameraParams`: Parameters for the `translateCamera` command.
+*   `ZoomParams`: Parameters for the `zoom` command.
+*   `ResetViewParams`: Parameters for the `resetView` command.
+*   `ToggleAxesParams`: Parameters for the `toggleAxes` command.
+*   `ToggleUnitCellParams`: Parameters for the `toggleUnitCell` command.
+*   `DisplayMessageParams`: Parameters for the `displayMessage` command.
+*   `Quaternion`, `Translation`, `ViewObject`, `CrystalData`: Helper models for complex parameter types.
 
-* **Input:** filename and content text
-* **Process:** write to disk under `static/models/`
-* **Output:** full file path or URL
-
----
-
-## 7. `utils/error_handlers.py` (Error Handling)
-
-**Responsibilities:**
-
-* Define custom exception classes
-* Map exceptions to HTTP status codes and messages
-
-**Public Classes:**
-
-```python
-class NLPError(Exception):
-    """Raised when the LLM API call fails or returns invalid output."""
-
-class ValidationError(Exception):
-    """Raised when command schema validation fails (wraps Pydantic errors)."""
-
-class ExecutionError(Exception):
-    """Raised when structure or view execution logic fails."""
-```
-
-**Public Function:**
-
-```python
-def handle_exception(e: Exception) -> Response
-```
-
-* **Input:** any exception
-* **Process:**
-
-  * If `NLPError` → HTTP 502
-  * If `ValidationError` → HTTP 400 or 422
-  * If `ExecutionError` → HTTP 500
-  * Else → HTTP 500
-* **Output:** Flask `Response` with JSON `{ "error": str(e) }`
+(Refer to [`2-MVP_Backend/docs/JSON_SCHEMA.md`](2-MVP_Backend/docs/JSON_SCHEMA.md) for the complete JSON Schema definitions derived from these models.)
 
 ---
 
-> **Note:** As the codebase evolves, update this MODULE\_SPEC.md to reflect any new modules or public interfaces. Ensure consistency with **JSON\_SCHEMA.md** and **ARCHITECTURE.md**.
+## 5. Executor Module
+
+The Executor module is responsible for performing the actual operations requested by the validated commands. It is logically divided into sub-modules based on the type of operation.
+
+### 5.1. Structure Executor (`executor/structure.py`)
+
+**Responsibility:**
+The `structure.py` module handles the generation of atomic structures using the Atomic Simulation Environment (ASE) library. It takes structured parameters for building a structure and returns the generated structure data in a specified format.
+
+**Public Interface:**
+
+### `build_structure(params: BuildStructureParams) -> Dict[str, str]`
+
+Generates an atomic structure based on the provided parameters and returns it as a string in the specified format.
+
+*   **Inputs:**
+    *   `params` (BuildStructureParams): A Pydantic object containing parameters for structure generation (e.g., `element`, `lattice`, `nx`, `ny`, `nz`, `a`, `format`).
+*   **Outputs:**
+    *   `Dict[str, str]`: A dictionary containing the generated structure data.
+        ```python
+        {
+          "format": "pdb", // or "xyz", "cif"
+          "data": "string" // The PDB/XYZ/CIF file content as a string
+        }
+        ```
+*   **Exceptions:**
+    *   `StructureGenerationError`: If ASE fails to generate the structure due to invalid parameters or internal issues.
+    *   `ValueError`: If required parameters are missing or have invalid values.
+
+---
+
+### 5.2. View Executor (`executor/view.py`)
+
+**Responsibility:**
+The `view.py` module is responsible for computing and manipulating camera and view parameters for the 3D viewer. It takes command-specific parameters and returns updated view objects or related data.
+
+**Public Interface:**
+
+### `compute_rotate_camera(params: RotateCameraParams, current_view: Optional[Dict[str, Any]] = None) -> Dict[str, Any]`
+
+Calculates the new camera orientation after rotation.
+
+*   **Inputs:**
+    *   `params` (RotateCameraParams): A Pydantic object containing rotation parameters (`axis`, `angle`).
+    *   `current_view` (Optional[Dict[str, Any]]): The current 3Dmol.js view object. If `None`, assumes a default initial view.
+*   **Outputs:**
+    *   `Dict[str, Any]`: An updated 3Dmol.js `viewObject` dictionary.
+*   **Exceptions:**
+    *   `ViewCalculationError`: If the rotation calculation fails due to invalid input.
+
+### `compute_set_view(params: SetViewParams) -> Dict[str, Any]`
+
+Returns the provided view object directly, intended for restoring a saved camera state.
+
+*   **Inputs:**
+    *   `params` (SetViewParams): A Pydantic object containing the `viewObject` to set.
+*   **Outputs:**
+    *   `Dict[str, Any]`: The `viewObject` provided in the input parameters.
+*   **Exceptions:**
+    *   `ValueError`: If the `viewObject` in parameters is malformed.
+
+### `compute_translate_camera(params: TranslateCameraParams, current_view: Optional[Dict[str, Any]] = None) -> Dict[str, Any]`
+
+Calculates the new camera position after translation (panning).
+
+*   **Inputs:**
+    *   `params` (TranslateCameraParams): A Pydantic object containing the translation `vector` [dx, dy, dz].
+    *   `current_view` (Optional[Dict[str, Any]]): The current 3Dmol.js view object. If `None`, assumes a default initial view.
+*   **Outputs:**
+    *   `Dict[str, Any]`: An updated 3Dmol.js `viewObject` dictionary.
+*   **Exceptions:**
+    *   `ViewCalculationError`: If the translation calculation fails.
+
+### `compute_zoom(params: ZoomParams, current_view: Optional[Dict[str, Any]] = None) -> Dict[str, Any]`
+
+Calculates the new zoom level for the camera.
+
+*   **Inputs:**
+    *   `params` (ZoomParams): A Pydantic object containing the `factor` and optional `fixedPath`.
+    *   `current_view` (Optional[Dict[str, Any]]): The current 3Dmol.js view object. If `None`, assumes a default initial view.
+*   **Outputs:**
+    *   `Dict[str, Any]`: An updated 3Dmol.js `viewObject` dictionary.
+*   **Exceptions:**
+    *   `ViewCalculationError`: If the zoom calculation fails.
+
+### `compute_reset_view() -> Dict[str, Any]`
+
+Returns a default 3Dmol.js view object, resetting the camera to its initial state.
+
+*   **Inputs:** None
+*   **Outputs:**
+    *   `Dict[str, Any]`: A default 3Dmol.js `viewObject` dictionary.
+*   **Exceptions:** None
+
+---
+
+## 6. Utilities (`utils/`)
+
+The `utils/` directory contains helper modules that provide common functionalities across the backend service, such as error handling and logging.
+
+### 6.1. Error Handlers (`utils/error_handlers.py`)
+
+**Responsibility:**
+The `error_handlers.py` module defines custom exception classes and functions for handling and formatting errors consistently across the application.
+
+**Public Interface:**
+
+### `handle_api_error(e: Exception) -> Response`
+
+A Flask error handler that catches exceptions, logs them, and returns a standardized JSON error response to the client.
+
+*   **Inputs:**
+    *   `e` (Exception): The exception object caught by the Flask error handling mechanism.
+*   **Outputs:**
+    *   `Response`: A Flask `Response` object with a JSON body containing error details and an appropriate HTTP status code.
+        ```json
+        {
+          "error": "string",
+          "message": "string",
+          "details": "string" // Optional, for debugging
+        }
+        ```
+*   **Exceptions:** None (this function is an error handler itself)
+
+**Custom Exception Classes:**
+This module may define custom exception classes like:
+*   `APIError(Exception)`: Base class for API-specific errors.
+*   `InvalidInputError(APIError)`: For client-side input validation failures.
+*   `ServiceUnavailableError(APIError)`: For issues with external services (e.g., OpenAI).
+*   `InternalServerError(APIError)`: For unexpected backend errors.
+
+---
+
+### 6.2. Logging (`utils/logging.py`)
+
+**Responsibility:**
+The `logging.py` module configures the application's logging system, ensuring that messages are captured with appropriate severity levels and formats.
+
+**Public Interface:**
+
+### `setup_logging()`
+
+Configures the Python `logging` module for the application. This function should be called once at application startup.
+
+*   **Inputs:** None
+*   **Outputs:** None
+*   **Exceptions:** None
