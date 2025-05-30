@@ -3,11 +3,15 @@ from typing import Union, List, Literal, Optional
 
 class BuildStructureParams(BaseModel):
     """
-    Parameters to build a new atomic structure from raw file text.
+    Parameters to build a new atomic structure using ASE.
     """
-    format: Literal["pdb", "xyz", "sdf", "mol2", "cif"] = Field(..., description="File format of the structure data")
-    content: str = Field(..., description="Raw molecular data (PDB/XYZ/etc.) as text")
-    options: Optional[dict] = Field(None, description="Optional 3Dmol.js addModel options")
+    element: str = Field(..., description="Chemical symbol of the element (e.g., 'Al', 'Fe')")
+    lattice: str = Field(..., description="Lattice type (e.g., 'fcc', 'bcc', 'hcp')")
+    nx: int = Field(1, description="Supercell dimension along x-axis")
+    ny: int = Field(1, description="Supercell dimension along y-axis")
+    nz: int = Field(1, description="Supercell dimension along z-axis")
+    a: Optional[float] = Field(None, description="Lattice constant in Angstroms (if not default for element/lattice)")
+    format: Literal["pdb", "xyz", "cif"] = Field("pdb", description="Output file format for the structure data")
 
     model_config = ConfigDict(extra="forbid")
 
