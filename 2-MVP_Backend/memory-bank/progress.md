@@ -18,16 +18,13 @@
 - **Documentation Consistency:** `PLANNING.md` and `TASK.md` within `2-MVP_Backend/` correctly reference `2-MVP_Backend/` as the active implementation directory.
 
 ## What's Left to Build (Immediate Next Steps)
-1.  **Commence Phase 1 of `2-MVP_Backend/TASK.md` ("Repository & Environment Setup"):**
-    *   Set up Python virtual environment for `2-MVP_Backend`.
-    *   Create `2-MVP_Backend/requirements.txt`.
-    *   Install initial dependencies.
-    *   Create `2-MVP_Backend/config.py`.
-    *   Set up basic logging in `2-MVP_Backend/utils/logging_setup.py`.
-    *   Initialize Git repository (if not already done by user for the workspace).
+1.  **Commence Phase 9 of `2-MVP_Backend/TASK.md` ("CI/CD & Deployment Prep"):**
+    *   Add GitHub Actions for CI.
+    *   Consider Dockerfile creation.
+    *   Document environment variables.
 
 ## Current Status
-The project has successfully pivoted to a new implementation focus: "2-MVP_Backend". All foundational planning documents and the dedicated memory bank for this new backend-only MVP have been initialized. The workspace symlinks have been updated to reflect this new active context. The project is now ready to begin the first phase of technical implementation as detailed in `2-MVP_Backend/TASK.md`.
+"Phase 8.5: End-to-End Backend Testing" has been successfully completed. The backend API has been thoroughly tested with `curl` commands for various scenarios, including structure generation, camera manipulation, and error handling. All responses were verified against the API specifications. The project is now ready to proceed with CI/CD and deployment preparation as detailed in `2-MVP_Backend/TASK.md`.
 
 ## Known Issues
 - No known technical issues at this stage. The primary task was restructuring and re-initializing documentation for the new project scope.

@@ -10,6 +10,8 @@ The immediate focus is on initializing the project structure and core documentat
 - Creating a symlink in the workspace root (`memory-bank`) to point to `2-MVP_Backend/memory-bank/`.
 
 ## Recent Changes
+- Completed "Phase 8.5: End-to-End Backend Testing" as per `TASK.md`. This involved running the Flask app locally and performing comprehensive `curl` tests for structure generation, camera rotation, and various error scenarios.
+- Verified all expected HTTP status codes and JSON response structures.
 - Created the `2-MVP_Backend` directory.
 - Created `2-MVP_Backend/PLANNING.md` with content tailored to the backend-only MVP.
 - Created `2-MVP_Backend/TASK.md` with content tailored to the backend-only MVP.
@@ -23,11 +25,10 @@ The immediate focus is on initializing the project structure and core documentat
 - The `PLANNING.md` and `TASK.md` files within `2-MVP_Backend/` now correctly reference `2-MVP_Backend/` as the active implementation directory.
 
 ## Next Steps
-1.  Begin Phase 1 of the new `TASK.md` for `2-MVP_Backend`: "Repository & Environment Setup". This will involve:
-    *   Setting up the Python virtual environment specifically for this backend project.
-    *   Creating `requirements.txt` with initial dependencies (Flask, Flask-CORS, OpenAI, ASE, Pydantic, Pytest).
-    *   Creating `config.py` for environment variables.
-    *   Setting up basic logging.
+1.  Begin Phase 9 of `2-MVP_Backend/TASK.md`: "CI/CD & Deployment Prep". This will involve:
+    *   Adding GitHub Actions for CI.
+    *   Considering Dockerfile creation.
+    *   Documenting environment variables.
 
 ## Active Decisions and Considerations
 - **Backend Focus:** This implementation strictly focuses on the backend API. No frontend code will be developed.

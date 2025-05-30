@@ -96,6 +96,7 @@
 | **6. Testing & Performance Tuning**      | 4 days   | Unit/integration tests, benchmark <3 s              |
 | **7. Documentation & Handoff**           | 2 days   | Write out spec docs (API_SPEC.md, JSON_SCHEMA.md,   |
 |                                          |          | ARCHITECTURE.md, MODULE_SPEC.md)                    |
+| **8.5. End-to-End Backend Testing**       | 1 day    | Comprehensive `curl` tests against local Flask app  |
 
 ---
 
