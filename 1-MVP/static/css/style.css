@@ -1,0 +1,21 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+#viewer {
+     min-height: 0; /* Crucial for flex-grow in a column layout */
+}
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* Tailwind gray-300 */
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* Tailwind gray-500 */
+}

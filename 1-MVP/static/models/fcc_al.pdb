@@ -1,0 +1,9 @@
+HEADER    Crystallographic data for FCC Aluminum
+TITLE     FCC Aluminum structure
+REMARK    Generated for testing purposes.
+CRYST1    4.049   4.049   4.049  90.00  90.00  90.00 P 1          1
+ATOM      1  AL  AL   1       0.000   0.000   0.000  1.00  0.00           AL
+ATOM      2  AL  AL   1       0.000   2.025   2.025  1.00  0.00           AL
+ATOM      3  AL  AL   1       2.025   0.000   2.025  1.00  0.00           AL
+ATOM      4  AL  AL   1       2.025   2.025   0.000  1.00  0.00           AL
+END

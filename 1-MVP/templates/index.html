@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVP Application - Molecule Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <script src="https://3dmol.org/build/3Dmol-min.js"></script>
+</head>
+<body class="h-screen overflow-hidden bg-gray-100 text-gray-800 antialiased">
+    <div id="app-container" class="flex flex-col md:grid md:grid-cols-[2fr_1fr] w-full h-full gap-4 p-4 box-border">
+
+        <div id="viewer-pane" class="flex flex-col basis-3/5 md:basis-auto bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+            <h2 class="p-3 m-0 bg-gray-50 border-b border-gray-300 text-lg font-semibold text-gray-700">
+                3D Molecule Viewer
+            </h2>
+            <div id="viewer" class="flex-grow w-full bg-slate-200 relative"></div>
+        </div>
+
+        <div id="info-pane" class="flex flex-col basis-2/5 md:basis-auto bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+            <div class="p-2 bg-gray-50 border-b border-gray-300 flex items-center space-x-1">
+                <button id="show-controls-btn" class="px-4 py-2 text-sm font-medium rounded-md flex-1">Controls</button>
+                <button id="show-chat-btn" class="px-4 py-2 text-sm font-medium rounded-md flex-1">Chat</button>
+            </div>
+
+            <div id="controls-content-area" class="p-4 overflow-y-auto flex-grow">
+                <p class="text-sm text-gray-600 mb-4">
+                    Interact with the molecule using the controls below.
+                </p>
+                <h3 class="text-md font-semibold text-gray-700 mb-3">View Options</h3>
+                <div class="mb-4">
+                    <label for="representation-select" class="block text-sm font-medium text-gray-700 mb-1">Representation:</label>
+                    <select id="representation-select" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="sphere">Sphere (Atoms)</option>
+                        <option value="ballAndStick" selected>Ball and Stick</option>
+                        <option value="stick">Stick (Bonds)</option>
+                        <option value="line">Line (Bonds)</option>
+                    </select>
+                </div>
+<div class="mb-4">
+                    <label for="axes-toggle" class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="axes-toggle" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 mr-2" checked>
+                        Show XYZ Axes
+                    </label>
+                </div>
+                <div class="mb-4">
+                    <label for="unit-cell-toggle" class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="unit-cell-toggle" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 mr-2">
+                        Show Unit Cell
+                    </label>
+                </div>
+                <div class="mb-4">
+                    <label for="background-color-select" class="block text-sm font-medium text-gray-700 mb-1">Background Color:</label>
+                    <select id="background-color-select" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="#FFFFFF">White</option>
+                        <option value="#e5e7eb">Light Gray</option>
+                        <option value="#4b5563">Dark Gray</option>
+                        <option value="#000000">Black</option>
+                    </select>
+                </div>
+                <button id="reset-view-button" class="mt-2 w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md text-sm transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                    Reset View
+                </button>
+            </div>
+
+            <div id="chat-content-area" class="p-4 overflow-y-auto flex-grow hidden">
+                <p class="text-sm text-gray-600 mb-4">
+                    This is the chat area. Messages will appear here.
+                </p>
+                <div class="space-y-3">
+                    <div class="flex justify-end">
+                        <div class="p-2 bg-blue-500 text-white rounded-lg rounded-br-none max-w-[70%] break-words text-sm shadow">
+                            Hello from the chat!
+                        </div>
+                    </div>
+                    <div class="flex justify-start">
+                        <div class="p-2 bg-gray-200 text-gray-700 rounded-lg rounded-bl-none max-w-[70%] break-words text-sm shadow">
+                            Hi there! How's the molecule viewing?
+                        </div>
+                    </div>
+                     <div class="flex justify-end">
+                        <div class="p-2 bg-blue-500 text-white rounded-lg rounded-br-none max-w-[70%] break-words text-sm shadow">
+                           The manual axes at the origin are a good reference.
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 border-t border-gray-200">
+                    <input type="text" placeholder="Type a message..." class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/js/script.js"></script>
+</body>
+</html>

@@ -1,11 +1,7 @@
 # Active Context: NL-Atomic-Flask-MVP
 
 ## Current Work Focus
-The current focus is on setting up the foundational project structure and documentation for the NL-Atomic-Flask-MVP. This includes:
-- Creating the `1-MVP` subdirectory to house the current implementation.
-- Moving `PLANNING.md` and `TASK.md` into the `1-MVP` directory.
-- Creating symlinks for `PLANNING.md` and `TASK.md` in the workspace root, pointing to their new locations within `1-MVP`.
-- Populating the `memory-bank` directory within `1-MVP` with initial core documentation files (`projectbrief.md`, `productContext.md`, `systemPatterns.md`, `techContext.md`).
+The current focus is on completing Phase 2: Viewer Integration, which includes integrating 3Dmol.js, implementing a JavaScript loader, ensuring correct aesthetic layout, and optimizing performance. The project is now ready to proceed to Phase 3: Natural-Language → Slot Extraction.
 
 ## Recent Changes
 - Created `1-MVP/` directory.
@@ -20,13 +16,26 @@ The current focus is on setting up the foundational project structure and docume
 - Created symlink `memory-bank` in workspace root pointing to `1-MVP/memory-bank`.
 - Initialized Git repository with remote origin set to `https://github.com/fl-sean03/NLP-Atomic.git`.
 - Renamed Git branch to `main`.
+- Created `README.md` in the workspace root.
+- Committed initial project setup to Git.
+- **Phase 2: Viewer Integration Completed:**
+    - 3Dmol.js script included in `1-MVP/templates/index.html`.
+    - `div` for 3D viewer added to the left column of `1-MVP/templates/index.html`.
+    - Vanilla JavaScript function implemented in `1-MVP/static/js/script.js` to load a structure file from a URL into the viewer.
+    - Sample `.pdb` file placed in `1-MVP/static/models/`.
+    - JavaScript loader function successfully loads the sample file on page load, allowing rotation/zoom.
+    - Debugged and resolved issues causing blank screen and incorrect rendering (race condition, incorrect `$3Dmol.download` usage, missing style application).
+    - Refactored HTML, CSS, and JavaScript into separate files for better organization.
+    - Applied aesthetic improvements to ensure the viewer is correctly contained and does not overlap the header.
+    - Implemented performance optimizations in `script.js` for smoother rendering during rotation (strategic `viewer.render()` calls, optimized axes toggle, antialiasing, robust style updates).
+    - **"Show Unit Cell" Feature Implemented:**
+        - New checkbox for "Show Unit Cell" added to `1-MVP/templates/index.html`.
+        - `toggleUnitCell` function implemented in `1-MVP/static/js/script.js` to display a magenta, dashed unit cell based on `CRYST1` data.
+        - Debugging ensured correct display and hiding of the unit cell.
+    - Created `1-MVP/docs/unit_cell_feature.md` to document the new feature.
 
 ## Next Steps
-1. Create `1-MVP/memory-bank/progress.md`.
-2. Begin Phase 1 of the `TASK.md`: "Environment & Project Scaffold". This will involve:
-    - Setting up the Python virtual environment.
-    - Installing initial dependencies (Flask, OpenAI SDK, ASE).
-    - Creating the basic Flask application structure (`app.py`, `templates/`, `static/`).
+1. Begin Phase 3 of the `TASK.md`: "Natural-Language → Slot Extraction".
 
 ## Active Decisions and Considerations
 - The project will strictly adhere to the "Flask-only" constraint for the MVP.

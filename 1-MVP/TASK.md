@@ -33,7 +33,12 @@
 
 ---
 
-## Phase 2: Viewer Integration (2 days)
+## Phase 2: Viewer Integration (2 days) - DONE
+- **"Show Unit Cell" Feature Implemented:**
+    - New checkbox for "Show Unit Cell" added to `1-MVP/templates/index.html`.
+    - `toggleUnitCell` function implemented in `1-MVP/static/js/script.js` to display a magenta, dashed unit cell based on `CRYST1` data.
+    - Debugging ensured correct display and hiding of the unit cell.
+- Created `1-MVP/docs/unit_cell_feature.md` to document the new feature.
 
 1. **Add 3Dmol.js to page**  
    - Include the 3Dmol.js script in the HTML template.  

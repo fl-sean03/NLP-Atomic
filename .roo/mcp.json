@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "github.com/GreatScottyMac/context-portal": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd /home/sf2/MCP/context-portal && PYTHONPATH=./src /home/sf2/MCP/context-portal/.venv/bin/python -m context_portal_mcp.main --mode stdio --workspace_id \"/home/sf2/AFRL\""
+      ],
+      "disabled": false,
+      "autoApprove": []
+    },
+    "github.com/modelcontextprotocol/servers/tree/main/src/brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "BSApIZ5dDDVPMWpWkMvSRtXjZnF73fP"
+      },
+      "disabled": false,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "brave_web_search"
+      ]
+    },
+    "github.com/modelcontextprotocol/servers/tree/main/src/fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "disabled": false,
+      "autoApprove": []
+    },
+    "github.com/upstash/context7-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": true,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "resolve-library-id",
+        "get-library-docs"
+      ]
+    }
+  }
+}
