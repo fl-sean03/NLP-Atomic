@@ -308,6 +308,35 @@
 
 ---
 
+## Phase 8.5: End-to-End Backend Testing
+
+* [x] **Run Flask app locally**
+  * `export FLASK_APP=app.py`
+  * `export FLASK_ENV=development`
+  * `flask run` (run in a separate terminal)
+
+* [x] **Perform end-to-end curl tests**
+  * Test valid prompt for structure generation:
+    `curl -X POST http://localhost:5000/api/commands -d '{"prompt":"build a 2x2x2 FCC aluminum crystal"}' -H "Content-Type:application/json"`
+    * Expect `200 OK` and a JSON response containing PDB/XYZ content.
+  * Test valid prompt for camera rotation:
+    `curl -X POST http://localhost:5000/api/commands -d '{"prompt":"rotate the camera 90 degrees around the y-axis"}' -H "Content-Type:application/json"`
+    * Expect `200 OK` and a JSON response containing view object.
+  * Test invalid prompt (e.g., unrecognized command):
+    `curl -X POST http://localhost:5000/api/commands -d '{"prompt":"do something weird"}' -H "Content-Type:application/json"`
+    * Expect `400 Bad Request` or `502 Bad Gateway` (depending on LLM response) and an error message.
+  * Test invalid command parameters (e.g., missing required field):
+    `curl -X POST http://localhost:5000/api/commands -d '{"prompt":"build a crystal"}' -H "Content-Type:application/json"`
+    * Expect `400 Bad Request` and a validation error message.
+
+* [x] **Verify expected outputs**
+  * Confirm HTTP status codes and JSON response structures match expectations from `API_SPEC.md` and `ERROR_HANDLING.md`.
+
+* [x] **Commit & push**
+  * `git commit -am "Add end-to-end backend testing phase"`
+
+---
+
 ## Phase 9: CI/CD & Deployment Prep
 
 * [ ] **Add GitHub Actions**

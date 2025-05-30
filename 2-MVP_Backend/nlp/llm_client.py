@@ -16,22 +16,35 @@ OPENAI_FUNCTIONS = [
         "parameters": {
             "type": "object",
             "properties": {
-                "format": {
+                "element": {
                     "type": "string",
-                    "description": "File format of the structure data",
-                    "enum": ["pdb", "xyz", "sdf", "mol2", "cif"]
+                    "description": "Chemical symbol of the element (e.g., 'Al', 'Fe')"
                 },
-                "content": {
+                "lattice": {
                     "type": "string",
-                    "description": "Raw molecular data (PDB/XYZ/etc.) as text"
+                    "description": "Lattice type (e.g., 'fcc', 'bcc', 'hcp')"
                 },
-                "options": {
-                    "type": "object",
-                    "description": "Optional 3Dmol.js addModel options",
-                    "additionalProperties": True
+                "nx": {
+                    "type": "integer",
+                    "description": "Supercell dimension along x-axis",
+                    "default": 1
+                },
+                "ny": {
+                    "type": "integer",
+                    "description": "Supercell dimension along y-axis",
+                    "default": 1
+                },
+                "nz": {
+                    "type": "integer",
+                    "description": "Supercell dimension along z-axis",
+                    "default": 1
+                },
+                "a": {
+                    "type": "number",
+                    "description": "Lattice constant in Angstroms (if not default for element/lattice)"
                 }
             },
-            "required": ["format", "content"]
+            "required": ["element", "lattice"]
         }
     },
     {
@@ -116,7 +129,7 @@ FEW_SHOT_EXAMPLES = [
     {
         "role": "function",
         "name": "buildStructure",
-        "content": json.dumps({"format": "cif", "content": "placeholder_copper_sc_cif_data"})
+        "content": json.dumps({"element": "copper", "lattice": "sc"})
     },
     {
         "role": "user",
@@ -188,8 +201,9 @@ def generate_commands(
         raise NLPError("LLM did not return a function call.")
 
     try:
-        function_call_args = response.choices[0].message.function_call.arguments
-        commands = json.loads(function_call_args)
+        function_call_name = response.choices[0].message.function_call.name
+        function_call_args = json.loads(response.choices[0].message.function_call.arguments)
+        commands = [{"command": function_call_name, "params": function_call_args}]
         return commands
     except (AttributeError, KeyError, json.JSONDecodeError) as e:
         raise NLPError(f"Malformed function call arguments from OpenAI API: {e}")

@@ -76,7 +76,9 @@ def commands():
                 result = compute_set_view(command_args)
             elif command_type == "rotateCamera":
                 rotate_params = RotateCameraParams(**command_args)
-                result = compute_rotate_camera(rotate_params)
+                # For testing, provide a default prev_view. In a real app, this would come from the frontend.
+                default_prev_view = {"quaternion": [0, 0, 0, 1], "translation": [0, 0, 0], "zoom": 1}
+                result = compute_rotate_camera(default_prev_view, rotate_params.axis, rotate_params.angle)
             else:
                 raise ExecutionError(f"Unknown command type: {command_type}")
             results.append(result)
@@ -86,4 +88,4 @@ def commands():
     return jsonify(results), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
