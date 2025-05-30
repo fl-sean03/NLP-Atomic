@@ -1,9 +1,11 @@
 import io
+import functools
 from ase.build import bulk
 from ase.io import write
 from models.commands import BuildStructureParams
 from utils.error_handlers import ExecutionError
 
+@functools.lru_cache(maxsize=128)
 def build_structure(params: BuildStructureParams) -> str:
     """
     Builds an atomic structure using ASE based on the provided parameters.

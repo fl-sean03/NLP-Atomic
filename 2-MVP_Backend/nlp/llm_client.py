@@ -2,8 +2,9 @@ import os
 import json
 from typing import List, Optional
 import openai
-from ..config import OPENAI_API_KEY
+from config import OPENAI_API_KEY
 from utils.error_handlers import NLPError
+import functools
 
 openai.api_key = OPENAI_API_KEY
 
@@ -137,6 +138,17 @@ FEW_SHOT_EXAMPLES = [
     }
 ]
 
+# Pre-process initial messages (system prompt + few-shot examples)
+_INITIAL_MESSAGES = [
+    {
+        "role": "system",
+        "content": "You are a helpful assistant that translates natural language into 3Dmol.js viewer commands. Respond only with valid JSON commands using the provided functions."
+    }
+]
+for example in FEW_SHOT_EXAMPLES:
+    _INITIAL_MESSAGES.append(example)
+
+@functools.lru_cache(maxsize=128)
 def generate_commands(
     prompt: str,
     context: Optional[List[dict]] = None
@@ -155,16 +167,9 @@ def generate_commands(
     Raises:
         NLPError: If the API call fails or the response is malformed.
     """
-    messages = [
-        {
-            "role": "system",
-            "content": "You are a helpful assistant that translates natural language into 3Dmol.js viewer commands. Respond only with valid JSON commands using the provided functions."
-        }
-    ]
-
-    # Add few-shot examples
-    for example in FEW_SHOT_EXAMPLES:
-        messages.append(example)
+    messages = list(_INITIAL_MESSAGES) # Create a mutable copy
+    if context:
+        messages.extend(context)
 
     # Add user prompt
     messages.append({"role": "user", "content": prompt})
