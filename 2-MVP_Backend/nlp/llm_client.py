@@ -1,12 +1,12 @@
 import os
 import json
 from typing import List, Optional
-import openai
+from openai import OpenAI
 from config import OPENAI_API_KEY
 from utils.error_handlers import NLPError
 import functools
 
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Define OpenAI function definitions for tool use
 OPENAI_FUNCTIONS = [
@@ -188,25 +188,26 @@ def generate_commands(
     messages.append({"role": "user", "content": prompt})
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4-0613",
-            functions=OPENAI_FUNCTIONS,
+            tools=[{"type": "function", "function": f} for f in OPENAI_FUNCTIONS],
             messages=messages,
-            function_call="auto" # Allow the model to decide whether to call a function
+            tool_choice="auto" # Allow the model to decide whether to call a function
         )
     except Exception as e:
         raise NLPError(f"OpenAI API call failed: {e}")
 
-    if not response.choices[0].message.get("function_call"):
-        raise NLPError("LLM did not return a function call.")
+    if not response.choices[0].message.tool_calls:
+        raise NLPError("LLM did not return a tool call.")
 
     try:
-        function_call_name = response.choices[0].message.function_call.name
-        function_call_args = json.loads(response.choices[0].message.function_call.arguments)
+        tool_call = response.choices[0].message.tool_calls[0]
+        function_call_name = tool_call.function.name
+        function_call_args = json.loads(tool_call.function.arguments)
         commands = [{"command": function_call_name, "params": function_call_args}]
         return commands
     except (AttributeError, KeyError, json.JSONDecodeError) as e:
-        raise NLPError(f"Malformed function call arguments from OpenAI API: {e}")
+        raise NLPError(f"Malformed tool call arguments from OpenAI API: {e}")
 
 if __name__ == "__main__":
     try:

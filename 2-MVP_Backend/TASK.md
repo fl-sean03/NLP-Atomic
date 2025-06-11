@@ -347,7 +347,7 @@
 
   * Create `Dockerfile` for containerizing the service.
 
-* [ ] **Environment variables**
+* [x] **Environment variables**
 
   * Document in `.env.example`: `OPENAI_API_KEY`.
 
@@ -359,14 +359,14 @@
 
 ## Phase 10: Final Review & Release
 
-* [ ] **Code review & merge PR**
-* [ ] **Tag release**
+* [x] **Code review & merge PR**
+* [x] **Tag release**
 
   * `git tag v1.0.0 && git push --tags`
-* [ ] **Announce readiness**
+* [x] **Announce readiness**
 
   * Notify frontend team to switch from mock to real `/api/commands`.
-* [ ] **Monitor logs**
+* [x] **Monitor logs**
 
   * Ensure no unexpected errors in staging.
 

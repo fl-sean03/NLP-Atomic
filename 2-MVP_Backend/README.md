@@ -43,11 +43,12 @@ Follow these steps to set up the development environment:
 
 The application requires an OpenAI API key.
 
-1.  **Create a `.env` file** in the `2-MVP_Backend` directory:
+1.  **Copy `.env.example` to `.env`**:
+    ```bash
+    cp .env.example .env
     ```
-    OPENAI_API_KEY="your_openai_api_key_here"
-    ```
-    **Note**: Add `.env` to your `.gitignore` file to prevent it from being committed to version control.
+    Then, open `.env` and replace `your_openai_api_key_here` with your actual OpenAI API key.
+    **Note**: The `.env` file is already in `.gitignore` to prevent it from being committed to version control.
 
 2.  The `config.py` file will load this environment variable.
 
